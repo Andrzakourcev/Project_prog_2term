@@ -27,6 +27,8 @@ class Pizza(ABC):
         return self.__size
 
 
+    def __repr__(self):
+        return f"------------------- \n Название: {self.name} \n Состав: \n Тесто: {self.dough} \n Добавка: {self.filling} \n Соус: {self.sauce} \n Размер: {self.__size} \n -------------------"
 
 
     def track_time(f):
@@ -141,8 +143,8 @@ class Terminal:
             for product in products:
                 print(f'{product.product_id}. {product.product_name}')
             print('----------------')
-        except:
-            print('Ошибка бд')
+        # except:
+        #     print('Ошибка бд')
         finally:
             session.commit()
             session.close()
@@ -200,9 +202,11 @@ class Terminal:
             # Проверяем, является ли объект product прикрепленным к текущей сессии
             if not session.object_session(product):
                 product = session.merge(product)  # Привязываем объект к текущей сессии
+
             new_order = Orders(time_updated=datetime.now(), client_id=3, product_type=choose_pizza)
             session.add(new_order)
-        #
+            print('Ваш номер заказа:', session.query(Orders.order_id).all()[-1][0])
+
         # except:
         #     print('Ошибка бд')
         finally:
@@ -216,11 +220,11 @@ class Terminal:
         try:
 
             session = db_connect.session_db()
-            order = session.query(Orders).filter(Orders.order_id==order_id).all()
+            order = session.query(Orders).filter(Orders.order_id==order_id).first()
 
-            print(f'{order.product_id}')
+            print(order.product_type)
         # except:
-            #     print('Ошибка бд')
+        #         print('Ошибка бд')
         finally:
             session.commit()
             session.close()
@@ -271,7 +275,12 @@ class Terminal:
                     choose_pizza.fillings = new_fillings
                 else:
                     raise Exceptions.ValueError("""Ошибка ввода""")
-
+                print('--------------------')
+                print('Измененная добавка: ')
+                print(f"Тесто: {choose_pizza.dough}")
+                print(f"Соус: {choose_pizza.sauce}")
+                print(f"Добавка: {choose_pizza.filling}")
+                print('--------------------')
             return choose_pizza
         # except:
         #     print('Ошибка бд')
@@ -285,34 +294,38 @@ while True:
     session = db_connect.session_db()
     # print(s.query(Products).filter(Products.c.product_id == 1))
     menu = Terminal.menu
-    print('Выберите действие: ')
-    for i in range(len(menu)):
-        print(f'{i + 1}.{menu[i]}')
-    responce = input('>>> ')
+    responce = -1
+    while responce != '4':
+
+        print('Выберите действие: ')
+        for i in range(len(menu)):
+            print(f'{i + 1}.{menu[i]}')
+        responce = input('>>> ')
 
 
 
-    if responce == '1':
-        t1.show_menu_pizza()
-        print('Выберите номер продукта: ')
-        choose_pizza_num = int(input('>>> '))
-        product = session.query(Products).filter(Products.product_id == choose_pizza_num).first()
+        if responce == '1':
+            t1.show_menu_pizza()
+            print('Выберите номер продукта: ')
+            choose_pizza_num = int(input('>>> '))
+            product = session.query(Products).filter(Products.product_id == choose_pizza_num).first()
 
-        if product.category == 'Пицца':
-            choose_pizza = t1.change_compound(product.product_id)
-        else:
-            pass
+            if product.category == 'Пицца':
+                choose_pizza = t1.change_compound(product.product_id)
+            else:
+                pass
 
-        t1.make_order(product, choose_pizza=choose_pizza )
+            t1.make_order(product, choose_pizza=choose_pizza)
 
-    elif responce == '2':
-        t1.show_order(1)
-    elif responce == '3':
-        t1.show_order()
-        t1.cancel_position()
-    elif responce == '4':
-        print("Спасибо за заказ! Его уже начали готовить!")
-        for i in t1.order:
-            i.make_pizza()
-        print('Ваши пиццы готовы! Приятного аппетита!')
+        elif responce == '2':
+            order = int(input("Введите номер заказа: "))
+            t1.show_order(order)
+        elif responce == '3':
+            t1.show_order()
+            t1.cancel_position()
+        elif responce == '4':
+            print("Спасибо за заказ! Его уже начали готовить!")
+            # for i in t1.order:
+            #     i.make_pizza()
+            print('Ваши пиццы готовы! Приятного аппетита!')
     break

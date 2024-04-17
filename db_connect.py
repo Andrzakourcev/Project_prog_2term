@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import os.path
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime, Time, ForeignKey, func
 from sqlalchemy.orm import sessionmaker, Mapped, mapped_column, relationship
 from sqlalchemy.types import PickleType
 # Создаем базовый класс для объявления моделей
 from sqlalchemy.orm import DeclarativeBase
+
+
 
 # Определяем модель для таблицы Orders
 class Base(DeclarativeBase):
@@ -35,12 +39,22 @@ session = None
 #         Column('price', Integer, nullable=False),
 #     )
 association_table = Table(
-    "Order_products",
-    Base.metadata,
-    Column("order_product_id", Integer, primary_key=True, autoincrement=True),
-    Column("order_id", ForeignKey("Orders.order_id")),
-    Column("product_id", ForeignKey("Products.product_id")),
+"Order_products",
+Base.metadata,
+Column("order_product_id", Integer, primary_key=True, autoincrement=True),
+Column("order_id", ForeignKey("Orders.order_id")),
+Column("product_id", ForeignKey("Products.product_id")),
 )
+
+class Products(Base):
+    __tablename__ = 'Products'
+    product_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    product_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    price: Mapped[int] = mapped_column(Integer, nullable=False)
+    orders: Mapped[List[Orders]] = relationship(
+        secondary=association_table, back_populates="products"
+    )
 class Orders(Base):
     __tablename__ = 'Orders'
     order_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, nullable=False)
@@ -49,16 +63,9 @@ class Orders(Base):
     client_id: Mapped[int] = mapped_column(Integer, ForeignKey('Clients.client_id'), nullable=False)
     product_type: Mapped[object] = mapped_column(PickleType)
 
-    products = relationship("Products", secondary=association_table, backref="orders", cascade="all, delete-orphan")
-
-class Products(Base):
-    __tablename__ = 'Products'
-    product_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    product_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    category: Mapped[str] = mapped_column(String(100), nullable=False)
-    price: Mapped[int] = mapped_column(Integer, nullable=False)
-    orders: relationship("Orders", secondary=association_table, backref="products", cascade="all, delete-orphan")
-
+    products: Mapped[List[Products]] = relationship(
+        secondary=association_table, back_populates="orders"
+    )
 # Clients = Table(
 #         'Clients', meta,
 #         Column('client_id', Integer, primary_key=True, autoincrement=True, nullable=False),
