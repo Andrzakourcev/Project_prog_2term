@@ -38,36 +38,28 @@ session = None
 #         Column('category', String(100), nullable=False),
 #         Column('price', Integer, nullable=False),
 #     )
-association_table = Table(
-"Order_products",
-Base.metadata,
-Column("order_product_id", Integer, primary_key=True, autoincrement=True),
-Column("order_id", ForeignKey("Orders.order_id")),
-Column("product_id", ForeignKey("Products.product_id")),
-)
+class Orders(Base):
+    __tablename__ = 'Orders'
+    order_id = Column(Integer, primary_key=True, autoincrement=True)
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    time_updated = Column(DateTime(timezone=True), onupdate=func.now())
+    client_id = Column(Integer, ForeignKey('Clients.client_id'), nullable=False)
+    order_products = relationship("Order_products", back_populates="order")
+
+class Order_products(Base):
+    __tablename__ = 'Order_products'
+    order_product_id = Column(Integer, primary_key=True, autoincrement=True)
+    order_id = Column(Integer, ForeignKey('Orders.order_id'))
+    product_info = Column(PickleType)
+    order = relationship("Orders", back_populates="order_products")
 
 class Products(Base):
     __tablename__ = 'Products'
-    product_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    product_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    category: Mapped[str] = mapped_column(String(100), nullable=False)
-    price: Mapped[int] = mapped_column(Integer, nullable=False)
-    orders: Mapped[List[Orders]] = relationship(
-        secondary=association_table, back_populates="products"
-    )
-class Orders(Base):
-    __tablename__ = 'Orders'
-    order_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    time_created: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    time_updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now())
-    client_id: Mapped[int] = mapped_column(Integer, ForeignKey('Clients.client_id'), nullable=False)
-    product_type: Mapped[object] = mapped_column(PickleType)
-
-    products: Mapped[List[Products]] = relationship(
-        secondary=association_table, back_populates="orders"
-    )
-# Clients = Table(
-#         'Clients', meta,
+    product_id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    product_name = Column(String(100), nullable=False)
+    category = Column(String(100), nullable=False)
+    price = Column(Integer, nullable=False)
+    type_product = Column(PickleType)
 #         Column('client_id', Integer, primary_key=True, autoincrement=True, nullable=False),
 #         Column('name', String, nullable=False),
 #         Column('surname', String, nullable=False),
