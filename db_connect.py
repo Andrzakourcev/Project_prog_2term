@@ -20,24 +20,6 @@ meta = MetaData()
 session = None
 
 
-
-# Orders = Table(
-#         'Orders', meta,
-#         Column('order_id', Integer, primary_key=True, autoincrement=True, nullable=False),
-#         Column('product_id', Integer, nullable=False),
-#         Column('time_created', DateTime(timezone=True), server_default=func.now()),
-#         Column('time_updated ', DateTime(timezone=True), onupdate=func.now()),
-#         Column('client_id', Integer, ForeignKey('Clients.client_id'), nullable=False),
-#         Column('product_type', PickleType)
-#     )
-#
-# Products = Table(
-#         'Products', meta,
-#         Column('product_id', Integer, primary_key=True, autoincrement=True, nullable=False),
-#         Column('product_name', String(100), nullable=False),
-#         Column('category', String(100), nullable=False),
-#         Column('price', Integer, nullable=False),
-#     )
 class Orders(Base):
     __tablename__ = 'Orders'
     order_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -60,33 +42,6 @@ class Products(Base):
     category = Column(String(100), nullable=False)
     price = Column(Integer, nullable=False)
     type_product = Column(PickleType)
-#         Column('client_id', Integer, primary_key=True, autoincrement=True, nullable=False),
-#         Column('name', String, nullable=False),
-#         Column('surname', String, nullable=False),
-#         Column('patronymic', String, nullable=True),
-#         Column('age', Integer, nullable=False),
-#     )
-#
-# Order_products = Table(
-#         'Order_products', meta,
-#         Column('order_products.id', Integer, autoincrement=True, nullable=False, primary_key=True),
-#         Column('order_id', Integer, ForeignKey('Orders.order_id')),
-#         Column('product_id', Integer, ForeignKey('Products.product_id')),
-#     )
-#
-# Sauces = Table('Sauces', meta,
-#                    Column('sauces_id', Integer, autoincrement=True, nullable=False, primary_key=True),
-#                    Column('sauce_name', String, nullable=False)
-#                    )
-# Fillings = Table('Fillings', meta,
-#                      Column('fillings_id', Integer, autoincrement=True, nullable=False, primary_key=True),
-#                      Column('fillings_name', String, nullable=False)
-#                      )
-#
-# Dough = Table('Dough', meta,
-#                   Column('dough_id', Integer, autoincrement=True, nullable=False, primary_key=True),
-#                   Column('dough_name', String, nullable=False),
-#                   )
 
 
 class Clients(Base):
@@ -97,11 +52,6 @@ class Clients(Base):
     patronymic: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     age: Mapped[int] = mapped_column(Integer, nullable=False)
 
-# class OrderProducts(Base):
-#     __tablename__ = 'Order_products'
-#     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, nullable=False)
-#     order_id: Mapped[int] = mapped_column(Integer, ForeignKey('Orders.order_id'))
-#     product_id: Mapped[int] = mapped_column(Integer, ForeignKey('Products.product_id'))
 
 class Sauces(Base):
     __tablename__ = 'Sauces'
@@ -118,10 +68,6 @@ class Dough(Base):
     dough_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, nullable=False)
     dough_name: Mapped[str] = mapped_column(String, nullable=False)
 #
-# Category = Table('Category', meta,
-#                      Column('category_id',Integer, autoincrement=True, nullable=False, primary_key=True ),
-#                      Column('category_name', String, nullable=False),
-#                      )
 
 class Category(Base):
     __tablename__ = 'Category'

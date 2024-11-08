@@ -13,10 +13,13 @@ import threading
 
 
 class MainApp:
+
     def __init__(self, root):
         self.order_id = self.make_order()
         self.root = root
         self.create_main_screen()
+        self.pizza_quantities = {}
+
 
     def update(self):
         new_text = random.randint(1, 100)  # Генерируем случайное число
@@ -82,6 +85,7 @@ class MainApp:
         order_entry = tk.Entry(self.root)
         order_entry.pack()
 
+
         def show_order():
             order_id = order_entry.get()
             try:
@@ -100,9 +104,12 @@ class MainApp:
                         label_product_type.pack()
 
 
+
                 else:
                     label = tk.Label(self.root, text=f'Заказ с номером {order_id} не найден.')
                     label.pack()
+                self.button_back = tk.Button(self.root, text="Назад", command=self.create_main_screen)
+                self.button_back.pack()
 
             except Exception as e:
                 label = tk.Label(self.root, text=f'Ошибка при доступе к базе данных: {e}')
@@ -114,6 +121,10 @@ class MainApp:
 
         button_show_order = tk.Button(self.root, text="Показать заказ", command=show_order)
         button_show_order.pack()
+        self.button_back = tk.Button(self.root, text="Назад", command=self.create_main_screen)
+        self.button_back.pack()
+
+
 
     def show_menu_pizza(self):
         try:
@@ -124,10 +135,11 @@ class MainApp:
             label = tk.Label(self.root, text="Меню пиццы:")
             label.pack()
 
-            pizza_quantities = {}  # словарь для хранения количества пицц каждого вида
+             # словарь для хранения количества пицц каждого вида
 
             for pizza in pizzas:
                 frame = tk.Frame(self.root)
+
                 frame.pack()
 
                 label_name = tk.Label(frame, text=f'{pizza.product_id}. {pizza.product_name}')
@@ -136,9 +148,9 @@ class MainApp:
                 quantity = tk.IntVar()
                 quantity.set(0)
 
-                pizza_quantities[pizza.product_id] = quantity  # сохраняем переменную количества для каждой пиццы
+                self.pizza_quantities[pizza.product_id] = quantity  # сохраняем переменную количества для каждой пиццы
 
-                # Создадим словарь для временного хранения экземпляров пицц
+                # Создадим список для временного хранения экземпляров пицц
                 temp_pizzas = []
 
                 def change_ingredients(product_id, product_type):
@@ -153,8 +165,7 @@ class MainApp:
                                      text=f'Выберите компоненты для пиццы {product_type.name}:')
                     label.pack()
 
-                    # Добавление элементов управления для выбора компонентов
-                    # Например, можно использовать Combobox для выбора соуса, начинки и теста
+                    #Выбор из вариантов
                     sauce_combobox = ttk.Combobox(compound_window,
                                                   values=[sauce.sauce_name for sauce in available_sauces])
                     sauce_combobox.pack()
@@ -172,35 +183,36 @@ class MainApp:
                         new_pizza.filling = filling_combobox.get()
                         new_pizza.dough = dough_combobox.get()
                         new_pizza.sauce = sauce_combobox.get()
-                        # new_pizza = product_type(sauce=sauce_combobox.get(), filling=filling_combobox.get(),
-                        #                   dough=dough_combobox.get())
+
                         temp_pizzas.append(new_pizza)
 
                         compound_window.destroy()
 
                     save_button = tk.Button(compound_window, text="Сохранить изменения", command=save_changes)
                     save_button.pack()
-                    # manage_quantity('increment', product_id)
-                    current_quantity = pizza_quantities[product_id].get()
-                    pizza_quantities[product_id].set(current_quantity + 1)
+
+                    current_quantity = self.pizza_quantities[product_id].get()
+                    self.pizza_quantities[product_id].set(current_quantity + 1)
                     compound_window.mainloop()
 
-                # После нажатия кнопки "Сделать заказ" вам нужно будет обработать заказанные пиццы из словаря temp_pizzas
+
 
                 def manage_quantity(change_type, product_id):
-                    current_quantity = pizza_quantities[product_id].get()
+                    current_quantity = self.pizza_quantities[product_id].get()
                     if change_type == 'increment':
-                        pizza_quantities[product_id].set(current_quantity + 1)
+                        self.pizza_quantities[product_id].set(current_quantity + 1)
+
                         temp_pizzas.append(
                             session.query(Products.type_product).filter(Products.product_id == product_id).first()[0])
                     elif change_type == 'decrement' and current_quantity > 0:
-                        pizza_quantities[product_id].set(current_quantity - 1)
-
+                        self.pizza_quantities[product_id].set(current_quantity - 1)
+                        if temp_pizzas != []:
+                            temp_pizzas.remove(session.query(Products.type_product).filter(Products.product_id == product_id).first()[0])
                 button_plus = tk.Button(frame, text="+",
                                         command=lambda id=pizza.product_id: manage_quantity('increment', id))
                 button_plus.pack(side=tk.LEFT)
 
-                quantity_label = tk.Label(frame, textvariable=pizza_quantities[pizza.product_id])
+                quantity_label = tk.Label(frame, textvariable=self.pizza_quantities[pizza.product_id])
                 quantity_label.pack(side=tk.LEFT)
 
                 button_minus = tk.Button(frame, text="-",
@@ -223,13 +235,14 @@ class MainApp:
                     tk.messagebox.showinfo(title="Заказ", message=f"Спасибо за заказ! Номер заказа: {order_id} ")
                     self.create_main_screen()
                 else:
-                    # Обработка случая, когда пицца с заданным product_id не найдена в сохраненных данных
-                    # Можно вывести сообщение об ошибке или выполнить другие действия
+                    tk.messagebox.showinfo(title="Ошибка", message=f"Невозможно сохранить заказ без выбранных продуктов!")
                     return None
 
             button_add_to_order = tk.Button(self.root, text="Добавить к заказу",
                                             command=lambda: add_to_order(order_id=self.order_id))
             button_add_to_order.pack()
+            self.button_back = tk.Button(self.root, text="Назад", command=self.go_to_menu)
+            self.button_back.pack()
 
         except Exception as e:
             print(e)
@@ -262,9 +275,6 @@ class MainApp:
         for widget in self.root.winfo_children():
             widget.destroy()
 
-    def cancel_item(self):
-        # Здесь можно добавить функциональность для отмены позиции
-        pass
 
 
 class Mixin_Spicy:
@@ -381,6 +391,7 @@ class Seafood(Pizza):
         print('Вызван абстрактный метод в Seafood')
 
 
+
 if __name__ == "__main__":
     db_connect.create_db()
     session = db_connect.session_db()
@@ -388,7 +399,7 @@ if __name__ == "__main__":
 
     def start_gui():
         root = tk.Tk()
-        root.geometry('600x400+200+100')
+        root.geometry('600x500+200+300')
         root.title("Приложение пицца")
         app = MainApp(root)
 
@@ -398,13 +409,27 @@ if __name__ == "__main__":
         root.mainloop()
 
 
+    def start_gui1():
+        root1 = tk.Tk()
+        root1.geometry('600x500+200+300')
+        root1.title("Приложение пицца1")
+        app = MainApp(root1)
+
+        # Запускаем метод update каждые 1000 миллисекунд (1 секунда)
+        root1.after(1000, app.update)
+
+        root1.mainloop()
+
+
     def start_gui_thread():
         gui_thread = threading.Thread(target=start_gui)
         gui_thread.start()
-
+    def start_gui_thread1():
+        gui_thread = threading.Thread(target=start_gui1)
+        gui_thread.start()
 
     start_gui_thread()
-    time.sleep(1)
-    start_gui_thread()
+    time.sleep(0.5)
+    start_gui_thread1()
 
 
